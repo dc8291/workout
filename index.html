@@ -111,6 +111,24 @@
   .btn-primary { flex: 1; background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; }
   .btn-secondary { flex: 1; background: var(--bg3); color: var(--text); border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; }
 
+  /* WEIGH-IN */
+  .weigh-card { background: var(--bg2); margin: 0 16px 12px; border-radius: var(--radius); padding: 14px 16px; }
+  .weigh-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .weigh-title { font-size: 14px; font-weight: 700; }
+  .weigh-status { font-size: 12px; color: var(--text3); }
+  .weigh-status.done { color: var(--green); }
+  .weigh-row { display: flex; gap: 10px; margin-top: 10px; }
+  .weigh-input { flex: 1; min-width: 0; background: var(--bg3); border: none; border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; }
+  .weigh-save { background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .weigh-stats { font-size: 12px; color: var(--text2); margin-top: 10px; line-height: 1.5; }
+
+  /* WEEKLY REPORT */
+  .report-btn { display: block; width: calc(100% - 40px); margin: 0 20px 14px; background: var(--bg2); color: var(--text); border: 1px solid #ffffff18; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .field-row { display: flex; gap: 10px; }
+  .field-row > div { flex: 1; min-width: 0; }
+  .field-hint { font-size: 12px; color: var(--text3); line-height: 1.45; margin-top: 8px; }
+  .report-text { background: var(--bg3); border: none; border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 12px; font-family: ui-monospace, Menlo, monospace; width: 100%; height: 220px; outline: none; resize: vertical; line-height: 1.45; }
+
   /* TOAST */
   .toast { position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green); color: #fff; padding: 12px 20px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 300; opacity: 0; transition: all 0.3s ease; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -130,6 +148,7 @@
     <h1>💪 Today</h1>
     <p id="today-date"></p>
   </div>
+  <div class="weigh-card" id="weigh-card"></div>
   <div class="day-selector" id="day-selector"></div>
   <div id="workout-content"></div>
 </div>
@@ -140,6 +159,7 @@
     <h1>📈 Progress</h1>
     <p>Your logged history</p>
   </div>
+  <button class="report-btn" onclick="openReport()">📋 Weekly report for trainer</button>
   <div class="progress-list" id="progress-list"></div>
 </div>
 
@@ -178,6 +198,36 @@
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn-primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEEKLY REPORT -->
+<div class="modal-overlay" id="report-overlay">
+  <div class="modal">
+    <div class="modal-title">Weekly report</div>
+    <div class="field-row">
+      <div>
+        <div class="field-label">Sleep (h)</div>
+        <input class="field-input" id="rep-sleep" type="number" inputmode="decimal" placeholder="7.5" oninput="onReportField()">
+      </div>
+      <div>
+        <div class="field-label">Ankle L (cm)</div>
+        <input class="field-input" id="rep-ktw-l" type="number" inputmode="decimal" placeholder="8" oninput="onReportField()">
+      </div>
+      <div>
+        <div class="field-label">Ankle R (cm)</div>
+        <input class="field-input" id="rep-ktw-r" type="number" inputmode="decimal" placeholder="9" oninput="onReportField()">
+      </div>
+    </div>
+    <div class="field-hint">Ankle test (knee-to-wall): face a wall with one foot forward, toes straight. Bend that knee to touch the wall while the heel stays flat. Slide the foot back until you can only just do it, then measure toe-to-wall in cm. Test both feet. Bigger is better; about 10 cm or more is a common target.</div>
+    <div class="field-label">Notes for trainer</div>
+    <input class="field-input" id="rep-notes" placeholder="Soreness, energy, anything off" oninput="onReportField()">
+    <div class="field-label">Report</div>
+    <textarea class="report-text" id="report-text"></textarea>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeReport()">Close</button>
+      <button class="btn-primary" onclick="copyReport()">Copy</button>
     </div>
   </div>
 </div>
@@ -808,6 +858,250 @@ function renderBests() {
 }
 
 // ============================================================
+// DAILY WEIGH-IN (kg, one entry per day, 7-day rolling average)
+// ============================================================
+const WEIGHT_KEY = 'weightLogV1';
+function getWeights() { return lsGet(WEIGHT_KEY, {}) || {}; }
+function isoToDate(iso) { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); }
+function isoDaysAgo(n) {
+  const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+// Days ago, inclusive: (6, 0) = today and the 6 days before it.
+function weightWindow(startAgo, endAgo) {
+  const w = getWeights();
+  const pts = [];
+  for (let n = startAgo; n >= endAgo; n--) {
+    const iso = isoDaysAgo(n);
+    const v = parseFloat(w[iso]);
+    if (!isNaN(v)) pts.push({ iso, v });
+  }
+  const avg = pts.length ? pts.reduce((s, p) => s + p.v, 0) / pts.length : null;
+  return { pts, avg, n: pts.length };
+}
+function weightStats() {
+  const cur = weightWindow(6, 0);
+  const prev = weightWindow(13, 7);
+  const change = (cur.avg !== null && prev.avg !== null) ? cur.avg - prev.avg : null;
+  return { cur, prev, change };
+}
+function fmtSigned(n) {
+  const r = Math.round(n * 10) / 10;
+  return r === 0 ? '0' : (r > 0 ? '+' : '') + r;
+}
+
+function renderWeighCard() {
+  const el = document.getElementById('weigh-card');
+  if (!el) return;
+  const typedEl = document.getElementById('weigh-input');
+  const typed = typedEl ? typedEl.value : '';
+  const w = getWeights();
+  const todayVal = w[todayISO()];
+  const { cur, change } = weightStats();
+  const latestIso = Object.keys(w).sort().pop();
+  const hint = latestIso ? w[latestIso] : '';
+
+  let statsLine = 'Log your morning weight, after the bathroom and before eating or drinking.';
+  if (cur.n) {
+    statsLine = `7-day avg ${cur.avg.toFixed(1)} kg (${cur.n} weigh-in${cur.n === 1 ? '' : 's'})`;
+    if (change !== null) statsLine += ` · ${fmtSigned(change)} kg vs prior 7 days`;
+    if (cur.n < 4) statsLine += ' · log 4+ days for a reliable average';
+  }
+  el.innerHTML = `
+    <div class="weigh-top">
+      <div class="weigh-title">⚖️ Morning weigh-in</div>
+      <div class="weigh-status ${todayVal ? 'done' : ''}">${todayVal ? 'Today: ' + escapeHtml(String(todayVal)) + ' kg ✓' : 'Not weighed today'}</div>
+    </div>
+    <div class="weigh-row">
+      <input class="weigh-input" id="weigh-input" type="number" inputmode="decimal" step="0.1" placeholder="${hint ? escapeAttr(String(hint)) + ' kg' : 'kg'}">
+      <button class="weigh-save" onclick="saveWeight()">${todayVal ? 'Update' : 'Save'}</button>
+    </div>
+    <div class="weigh-stats">${escapeHtml(statsLine)}</div>`;
+  if (typed) document.getElementById('weigh-input').value = typed;
+}
+
+function saveWeight() {
+  const v = parseFloat(document.getElementById('weigh-input').value);
+  if (isNaN(v) || v < 30 || v > 250) { toast('Enter your weight in kg', 'var(--accent)'); return; }
+  const rounded = Math.round(v * 10) / 10;
+  const w = getWeights();
+  const today = todayISO();
+  const others = Object.keys(w).filter(k => k !== today).sort();
+  if (others.length) {
+    const last = parseFloat(w[others[others.length - 1]]);
+    const diff = Math.abs(rounded - last);
+    if (!isNaN(last) && diff > 4 &&
+        !confirm(`That is ${fmtNum(diff)} kg different from your last weigh-in (${last} kg). Save anyway?`)) return;
+  }
+  w[today] = rounded;
+  lsSet(WEIGHT_KEY, w);
+  document.getElementById('weigh-input').value = '';
+  renderWeighCard();
+  toast('Weight saved ✓');
+}
+
+// ============================================================
+// WEEKLY REPORT (copy into the trainer chat)
+// ============================================================
+const BODY_KEY = 'bodyCheckinV1';
+const REPORT_DAYS = 7;
+
+function parseLogDate(s) {
+  const p = String(s || '').split('/');
+  if (p.length !== 3) return null;
+  const m = parseInt(p[0], 10), d = parseInt(p[1], 10);
+  let y = parseInt(p[2], 10);
+  if (isNaN(m) || isNaN(d) || isNaN(y)) return null;
+  if (y < 100) y += 2000;
+  return new Date(y, m - 1, d);
+}
+function fmtMD(d) { return `${d.getMonth() + 1}/${d.getDate()}`; }
+function fmtMDY(d) { return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; }
+function fmtNum(n) { return Number.isInteger(n) ? String(n) : String(Math.round(n * 10) / 10); }
+
+function entrySets(e) {
+  const sets = [];
+  for (let s = 1; e[`s${s}w`] !== undefined || e[`s${s}r`] !== undefined; s++) {
+    sets.push({ w: e[`s${s}w`], r: e[`s${s}r`] });
+  }
+  return sets;
+}
+function topWeight(e) {
+  return entrySets(e).reduce((m, s) => Math.max(m, parseFloat(s.w) || 0), 0);
+}
+
+function buildReport() {
+  const log = getLog();
+  const body = lsGet(BODY_KEY, {}) || {};
+  const end = new Date(); end.setHours(0, 0, 0, 0);
+  const start = new Date(end); start.setDate(start.getDate() - (REPORT_DAYS - 1));
+  const inWeek = e => { const d = parseLogDate(e.date); return !!d && d >= start && d <= end; };
+  const dayOrder = ['mon','tue','wed','thu','fri','sat','sun'];
+
+  const trained = new Map(); // time -> Date
+  const sections = [];
+  dayOrder.forEach(day => {
+    const w = WORKOUTS[day];
+    const planned = w.exercises.map(x => x.name);
+    const names = planned.slice();
+    Object.keys(log).filter(k => k.startsWith(day + '__')).forEach(k => {
+      const n = k.slice(day.length + 2);
+      if (!names.includes(n)) names.push(n);
+    });
+
+    const out = [];
+    let anyThisWeek = false;
+    names.forEach(name => {
+      const all = log[`${day}__${name}`] || [];
+      const rows = [];
+      all.forEach((e, idx) => {
+        if (!inWeek(e)) return;
+        const d = parseLogDate(e.date);
+        trained.set(d.getTime(), d);
+        anyThisWeek = true;
+        const setsText = entrySets(e).map(s => `${s.w}×${s.r}`).join(', ');
+        let change = 'first log';
+        if (idx > 0) {
+          const delta = topWeight(e) - topWeight(all[idx - 1]);
+          change = delta > 0 ? `+${fmtNum(delta)} lb vs last time`
+                 : delta < 0 ? `${fmtNum(delta)} lb vs last time`
+                 : 'same weight as last time';
+        }
+        const note = e.notes ? ` — "${e.notes}"` : '';
+        rows.push(`  - ${name} (${fmtMD(d)}): ${setsText} [${change}]${note}`);
+      });
+      if (rows.length) out.push(...rows);
+      else if (planned.includes(name)) out.push(`  - ${name}: not logged`);
+    });
+
+    if (anyThisWeek) sections.push(`${w.title}\n${out.join('\n')}`);
+    else sections.push(`${w.title}: nothing logged`);
+  });
+
+  const trainedList = [...trained.values()].sort((a, b) => a - b).map(fmtMD);
+
+  const mob = getMob();
+  let mDone = 0, mTotal = 0;
+  dayOrder.forEach(day => {
+    const n = WORKOUTS[day].mobility.length;
+    const done = (mob[day] && mob[day].done) || {};
+    mTotal += n;
+    for (let i = 0; i < n; i++) if (done[i]) mDone++;
+  });
+
+  const val = (v, unit) => (v === undefined || v === null || v === '') ? 'not entered' : `${v}${unit}`;
+  const lines = [];
+  lines.push(`Weekly trainer update — ${fmtMDY(start)} to ${fmtMDY(end)}`);
+  lines.push('');
+  lines.push(`TRAINING (weights in lb) — days with logged work: ${trainedList.length}${trainedList.length ? ' (' + trainedList.join(', ') + ')' : ''}`);
+  lines.push(sections.join('\n'));
+  lines.push('');
+  lines.push(`MOBILITY: ${mDone} of ${mTotal} finisher items checked this week`);
+  lines.push('');
+  const ws = weightStats();
+  lines.push('BODYWEIGHT (morning weigh-ins)');
+  if (!ws.cur.n) {
+    lines.push('- No weigh-ins logged in the last 7 days');
+  } else {
+    lines.push(`- 7-day average: ${ws.cur.avg.toFixed(1)} kg (${ws.cur.n} weigh-in${ws.cur.n === 1 ? '' : 's'})${ws.cur.n < 4 ? ' — fewer than 4 weigh-ins, so treat this as rough' : ''}`);
+    lines.push(ws.prev.n
+      ? `- Previous 7 days: ${ws.prev.avg.toFixed(1)} kg (${ws.prev.n} weigh-in${ws.prev.n === 1 ? '' : 's'})`
+      : '- Previous 7 days: no weigh-ins');
+    if (ws.change !== null) lines.push(`- Change: ${fmtSigned(ws.change)} kg per week`);
+    lines.push(`- Daily: ${ws.cur.pts.map(p => `${fmtMD(isoToDate(p.iso))} ${p.v.toFixed(1)}`).join(', ')}`);
+  }
+  lines.push('');
+  lines.push(`CHECK-IN${body.date ? ' (updated ' + body.date + ')' : ''}`);
+  lines.push(`- Ankle knee-to-wall: left ${val(body.ktwL, ' cm')}, right ${val(body.ktwR, ' cm')}`);
+  lines.push(`- Sleep: ${val(body.sleep, ' h/night')}`);
+  if (body.notes) lines.push(`- Notes: ${body.notes}`);
+  lines.push('');
+  lines.push("Trainer: review my week against my instructions, apply the adjustment rules, tell me whether to change calories or training, and update next week's plan.");
+  return lines.join('\n');
+}
+
+function refreshReport() {
+  document.getElementById('report-text').value = buildReport();
+}
+function openReport() {
+  const b = lsGet(BODY_KEY, {}) || {};
+  document.getElementById('rep-sleep').value = b.sleep ?? '';
+  document.getElementById('rep-ktw-l').value = b.ktwL ?? '';
+  document.getElementById('rep-ktw-r').value = b.ktwR ?? '';
+  document.getElementById('rep-notes').value = b.notes ?? '';
+  refreshReport();
+  document.getElementById('report-overlay').classList.add('open');
+}
+function closeReport() {
+  document.getElementById('report-overlay').classList.remove('open');
+}
+function onReportField() {
+  const g = id => document.getElementById(id).value.trim();
+  lsSet(BODY_KEY, {
+    sleep: g('rep-sleep'),
+    ktwL: g('rep-ktw-l'), ktwR: g('rep-ktw-r'),
+    notes: g('rep-notes'), date: fmtMDY(new Date())
+  });
+  refreshReport();
+}
+async function copyReport() {
+  const ta = document.getElementById('report-text');
+  try {
+    await navigator.clipboard.writeText(ta.value);
+    toast('Report copied ✓');
+  } catch (e) {
+    try {
+      ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
+      const ok = document.execCommand('copy');
+      if (ok) toast('Report copied ✓');
+      else toast('Select the text and copy it manually', 'var(--accent)');
+    } catch (e2) {
+      toast('Select the text and copy it manually', 'var(--accent)');
+    }
+  }
+}
+
+// ============================================================
 // UTILS
 // ============================================================
 function escapeHtml(s) {
@@ -821,6 +1115,9 @@ function escapeAttr(s) { return escapeHtml(s); }
 resetAllStaleDays();
 renderDaySelector();
 renderWorkout();
+renderWeighCard();
+// Refresh the weigh-in card when the app is reopened (e.g. after midnight)
+document.addEventListener('visibilitychange', () => { if (!document.hidden) renderWeighCard(); });
 </script>
 </body>
 </html>
