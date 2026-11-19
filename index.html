@@ -56,6 +56,7 @@
   .exercise-name { font-size: 16px; font-weight: 600; }
   .exercise-meta { font-size: 13px; color: var(--text3); margin-top: 2px; }
   .exercise-last { font-size: 12px; color: var(--blue); margin-top: 2px; }
+  .exercise-tip { font-size: 12px; color: var(--text3); margin-top: 2px; }
   .chevron { color: var(--text3); font-size: 12px; transition: transform 0.2s; cursor: pointer; padding: 4px 8px; }
   .exercise-body { padding: 0 16px 16px; display: none; }
   .exercise-body.open { display: block; }
@@ -237,100 +238,99 @@
 
 <script>
 // ============================================================
-// DEFAULT WORKOUTS (3 main exercises per day)
+// DEFAULT WORKOUTS — 12-week lean bulk plan (weeks 1-2 ramp-in sets).
+// Ankle routine is done every day, training or rest.
 // ============================================================
+const ANKLE_ROUTINE = [
+  'Knee-to-Wall Rocks (2 x 10/side, hold 2 sec)',
+  'Banded Ankle Mobilization (2 x 10/side)',
+  'Calf Stretch, straight + bent knee (2 x 30 sec each)',
+  'Tibialis Raises at Wall (2 x 15)',
+  'Single-Leg Balance (2 x 30 sec/side)',
+];
+
 const DEFAULT_WORKOUTS = {
   mon: {
-    label: 'MON', title: 'Monday — Upper Body Push', color: '#ff375f',
+    label: 'MON', title: 'Monday — Upper A', color: '#ff375f',
+    note: 'Warm up with 1–2 lighter sets first. Presses: stop 1–2 reps short of failure (no spotter).',
     exercises: [
-      { name: 'DB Bench Press', sets: 4, reps: '8-12' },
-      { name: 'DB Shoulder Press', sets: 3, reps: '10-12' },
-      { name: 'DB Skull Crushers', sets: 3, reps: '10-12' },
+      { name: 'DB Bench Press', sets: 3, reps: '6-10', tip: 'Pair 1a · bail out by crunching up, never grind a rep' },
+      { name: 'One-Arm DB Row', sets: 3, reps: '6-10/arm', tip: 'Pair 1b · alternate with the bench press' },
+      { name: 'DB Overhead Press', sets: 3, reps: '6-10', tip: 'Pair 2a · sit with back support' },
+      { name: 'Band Pulldown', sets: 3, reps: '10-15', tip: 'Pair 2b · door anchor · switch to pull-ups when the bar arrives' },
+      { name: 'Lateral Raise', sets: 3, reps: '10-20', tip: 'Circuit 3a → 3b → 3c, 3 rounds' },
+      { name: 'Overhead Triceps Extension', sets: 3, reps: '10-15', tip: 'Circuit 3b' },
+      { name: 'DB Curl', sets: 3, reps: '10-15', tip: 'Circuit 3c' },
+      { name: 'Slow Bent-Knee Calf Raise', sets: 3, reps: '12', tip: 'Ankle add-on for training days' },
     ],
-    mobility: [
-      'Chest Doorway Stretch (2 x 30 sec each side)',
-      'Shoulder Cross-Body Stretch (2 x 30 sec each side)',
-      'Thoracic Spine Rotation (2 x 10 reps each side)',
-    ]
+    mobility: ANKLE_ROUTINE,
   },
   tue: {
-    label: 'TUE', title: 'Tuesday — Lower Body & Core', color: '#0a84ff',
+    label: 'TUE', title: 'Tuesday — Lower A', color: '#0a84ff',
+    note: 'Heels on a plate or book for squats. Stop 1–2 reps short: Thursday basketball is in 2 days.',
     exercises: [
-      { name: 'DB Goblet Squat', sets: 4, reps: '10-12' },
-      { name: 'DB Romanian Deadlift', sets: 4, reps: '10-12' },
-      { name: 'Plank', sets: 3, reps: '45-60 sec' },
+      { name: 'Heel-Elevated Goblet Squat', sets: 4, reps: '6-10', tip: 'Hold one DB at your chest · heels on a plate or book' },
+      { name: 'DB Romanian Deadlift', sets: 3, reps: '6-10' },
+      { name: 'Hip Thrust (Upper Back on Bench)', sets: 3, reps: '10-15' },
+      { name: 'Straight-Knee Calf Raise', sets: 3, reps: '12-20' },
+      { name: 'Slow Bent-Knee Calf Raise', sets: 3, reps: '12', tip: 'Ankle add-on for training days' },
+      { name: 'Dead Bug', sets: 2, reps: '8-10/side' },
+      { name: 'Plank', sets: 2, reps: '30-60 sec' },
     ],
-    mobility: [
-      'Hip Flexor Lunge Stretch (2 x 45 sec each side)',
-      'Pigeon Pose (2 x 45 sec each side)',
-      'Hamstring Floor Stretch (2 x 30 sec each side)',
-    ]
+    mobility: ANKLE_ROUTINE,
   },
   wed: {
-    label: 'WED', title: 'Wednesday — Active Recovery', color: '#bf5af2',
+    label: 'WED', title: 'Wednesday — Rest + Ankles', color: '#bf5af2',
+    note: 'Rest day: no hard lower-body work. Easy walk and the ankle routine below. Batch-cook session 2.',
     exercises: [
-      { name: 'Bodyweight Squat', sets: 2, reps: '15' },
-      { name: 'Glute Bridge', sets: 2, reps: '15' },
-      { name: 'Bird Dog', sets: 2, reps: '10/side' },
+      { name: 'Easy Walk', sets: 1, reps: '20-30 min', tip: 'Optional' },
     ],
-    mobility: [
-      'Cat-Cow (2 x 10 reps)',
-      'Child\'s Pose (2 x 45 sec)',
-      'Standing Forward Fold (2 x 30 sec)',
-    ]
+    mobility: ANKLE_ROUTINE,
   },
   thu: {
-    label: 'THU', title: 'Thursday — Upper Body Pull', color: '#30d158',
-    note: '⚡ Light day — stop before failure!',
+    label: 'THU', title: 'Thursday — Basketball', color: '#30d158',
+    note: '🏀 Ankle routine first, then 5 min easy jogging. Carb-rich meal 2–3 h before; protein + carbs within ~2 h after; drink plenty of fluids.',
     exercises: [
-      { name: 'DB Bent-Over Row', sets: 3, reps: '10-12' },
-      { name: 'DB Single-Arm Row', sets: 3, reps: '10-12/side' },
-      { name: 'DB Hammer Curl', sets: 3, reps: '10-12' },
+      { name: 'Easy Jog Warm-Up', sets: 1, reps: '5 min' },
+      { name: 'Basketball', sets: 1, reps: 'minutes played', tip: 'Log minutes played in the Reps box' },
     ],
-    mobility: [
-      'Cat-Cow (2 x 10 reps)',
-      "World's Greatest Stretch (2 x 5 per side)",
-      'Lat Stretch on Bench (2 x 30 sec each side)',
-    ]
+    mobility: ANKLE_ROUTINE,
   },
   fri: {
-    label: 'FRI', title: 'Friday — Full Body Power', color: '#ffd60a',
+    label: 'FRI', title: 'Friday — Upper B', color: '#ffd60a',
+    note: 'Upper body only. Warm up with 1–2 lighter sets; presses stop 1–2 reps short of failure (no spotter).',
     exercises: [
-      { name: 'DB Deadlift', sets: 4, reps: '8-10' },
-      { name: 'DB Arnold Press', sets: 3, reps: '8-10' },
-      { name: "DB Farmer's Carry", sets: 3, reps: '30-40 steps' },
+      { name: 'Incline DB Press', sets: 3, reps: '6-10', tip: 'Pair 1a · bail out by crunching up, never grind a rep' },
+      { name: 'Chest-Supported Incline Row', sets: 3, reps: '6-10', tip: 'Pair 1b' },
+      { name: 'Push-Up (Feet Elevated)', sets: 3, reps: '10-20', tip: 'Pair 2a · add a band across your back when it gets easy' },
+      { name: 'Pull-Up / Chin-Up', sets: 3, reps: '6-10', tip: 'Pair 2b · band pulldown until the bar arrives' },
+      { name: 'Lateral Raise', sets: 3, reps: '10-20', tip: 'Circuit 3a → 3b → 3c → 3d, 3 rounds' },
+      { name: 'Rear-Delt Fly', sets: 3, reps: '12-20', tip: 'Circuit 3b' },
+      { name: 'Band Pushdown', sets: 3, reps: '12-20', tip: 'Circuit 3c' },
+      { name: 'Hammer Curl', sets: 3, reps: '10-15', tip: 'Circuit 3d' },
+      { name: 'Slow Bent-Knee Calf Raise', sets: 3, reps: '12', tip: 'Ankle add-on for training days' },
     ],
-    mobility: [
-      'Full Body Foam Roll (5-10 min)',
-      'Figure-4 Glute Stretch (2 x 45 sec each side)',
-      'Overhead Tricep and Lat Stretch (2 x 30 sec each side)',
-    ]
+    mobility: ANKLE_ROUTINE,
   },
   sat: {
-    label: 'SAT', title: 'Saturday — Mobility & Core', color: '#64d2ff',
+    label: 'SAT', title: 'Saturday — Lower B', color: '#64d2ff',
+    note: 'Single-leg day: reps are per leg. Rear foot on the bench for split squats.',
     exercises: [
-      { name: 'Dead Bug', sets: 3, reps: '10/side' },
+      { name: 'Bulgarian Split Squat', sets: 3, reps: '10-15/leg' },
+      { name: 'Single-Leg RDL', sets: 3, reps: '10-15/leg' },
+      { name: 'Bench Step-Up', sets: 3, reps: '10-15/leg' },
+      { name: 'Slow Bent-Knee Calf Raise', sets: 3, reps: '12-20', tip: 'Doubles as the ankle add-on' },
       { name: 'Side Plank', sets: 2, reps: '30 sec/side' },
-      { name: 'Hollow Hold', sets: 3, reps: '20 sec' },
     ],
-    mobility: [
-      'Foam Roll Back & Hips (5 min)',
-      'Deep Squat Hold (2 x 45 sec)',
-      'Thread the Needle (2 x 30 sec/side)',
-    ]
+    mobility: ANKLE_ROUTINE,
   },
   sun: {
-    label: 'SUN', title: 'Sunday — Light Recovery', color: '#ff9f0a',
+    label: 'SUN', title: 'Sunday — Rest + Check-in', color: '#ff9f0a',
+    note: 'Full rest from lifting. Batch-cook session 1. Measure your waist at the navel and send the weekly report at the weekend check-in.',
     exercises: [
-      { name: 'Walking (moderate pace)', sets: 1, reps: '20-30 min' },
-      { name: 'Push-Up (easy pace)', sets: 2, reps: '10' },
-      { name: 'Bodyweight Row / Doorway Row', sets: 2, reps: '10' },
+      { name: 'Easy Walk', sets: 1, reps: '20-30 min', tip: 'Optional' },
     ],
-    mobility: [
-      'Full Body Stretch Routine (10 min)',
-      'Diaphragmatic Breathing (5 min)',
-      'Neck & Shoulder Rolls (2 x 10)',
-    ]
+    mobility: ANKLE_ROUTINE,
   },
 };
 
@@ -351,7 +351,7 @@ function lsSet(key, val) {
 
 // Load or seed workouts (editable & persisted)
 function loadWorkouts() {
-  const saved = lsGet('workoutsV2', null);
+  const saved = lsGet('workoutsV3', null);
   if (saved) {
     // Ensure any missing days fall back to defaults (safety on schema changes)
     Object.keys(DEFAULT_WORKOUTS).forEach(k => {
@@ -360,18 +360,18 @@ function loadWorkouts() {
     return saved;
   }
   const fresh = JSON.parse(JSON.stringify(DEFAULT_WORKOUTS));
-  lsSet('workoutsV2', fresh);
+  lsSet('workoutsV3', fresh);
   return fresh;
 }
 let WORKOUTS = loadWorkouts();
-function saveWorkouts() { lsSet('workoutsV2', WORKOUTS); }
+function saveWorkouts() { lsSet('workoutsV3', WORKOUTS); }
 
 function getLog()    { return lsGet('workoutLog', {}) || {}; }
 function saveLog(l)  { lsSet('workoutLog', l); }
-function getChecks() { return lsGet('exerciseChecksV2', {}) || {}; }
-function saveChecks(c){ lsSet('exerciseChecksV2', c); }
-function getMob()    { return lsGet('mobChecksV2', {}) || {}; }
-function saveMob(c)  { lsSet('mobChecksV2', c); }
+function getChecks() { return lsGet('exerciseChecksV3', {}) || {}; }
+function saveChecks(c){ lsSet('exerciseChecksV3', c); }
+function getMob()    { return lsGet('mobChecksV3', {}) || {}; }
+function saveMob(c)  { lsSet('mobChecksV3', c); }
 
 // ============================================================
 // WEEKLY AUTO-RESET
@@ -524,7 +524,8 @@ function renderWorkout() {
         <div class="exercise-check ${ck ? 'done' : ''}" id="ck-${i}" onclick="toggleCheck(${i})">${ck ? '✓' : ''}</div>
         <div class="exercise-info" onclick="toggleExercise(${i})">
           <div class="exercise-name">${escapeHtml(ex.name)}</div>
-          <div class="exercise-meta">${ex.sets} sets · ${escapeHtml(ex.reps)} reps</div>
+          <div class="exercise-meta">${ex.sets} ${ex.sets === 1 ? 'set' : 'sets'} · ${escapeHtml(repsLabel(ex.reps))}</div>
+          ${ex.tip ? `<div class="exercise-tip">${escapeHtml(ex.tip)}</div>` : ''}
           <div class="exercise-last">${escapeHtml(lastText)}</div>
         </div>
         <div class="chevron" id="chev-${i}" onclick="toggleExercise(${i})">›</div>
@@ -555,7 +556,7 @@ function renderWorkout() {
   const mobH = document.createElement('div');
   mobH.className = 'section-header';
   mobH.style.marginTop = '16px';
-  mobH.innerHTML = `<span>🧘 Mobility Finisher</span>`;
+  mobH.innerHTML = `<span>🦶 Daily Ankle Routine</span>`;
   container.appendChild(mobH);
 
   const mobStore = getMob();
@@ -581,6 +582,11 @@ function renderWorkout() {
   const sp = document.createElement('div');
   sp.style.height = '20px';
   container.appendChild(sp);
+}
+
+function repsLabel(r) {
+  r = String(r ?? '');
+  return /^\d+(\s*-\s*\d+)?$/.test(r) ? r + ' reps' : r;
 }
 
 function buildSetRows(numSets, exIdx, lastEntry) {
@@ -733,7 +739,7 @@ document.getElementById('modal-save').onclick = () => {
     toast('Exercise added ✓');
   } else if (modalMode === 'edit' && modalEditIdx !== null) {
     const oldName = WORKOUTS[activeDay].exercises[modalEditIdx].name;
-    WORKOUTS[activeDay].exercises[modalEditIdx] = { name, sets, reps };
+    WORKOUTS[activeDay].exercises[modalEditIdx] = { ...WORKOUTS[activeDay].exercises[modalEditIdx], name, sets, reps };
     // Migrate log key if name changed
     if (oldName !== name) {
       const log = getLog();
@@ -1036,7 +1042,7 @@ function buildReport() {
   lines.push(`TRAINING (weights in lb) — days with logged work: ${trainedList.length}${trainedList.length ? ' (' + trainedList.join(', ') + ')' : ''}`);
   lines.push(sections.join('\n'));
   lines.push('');
-  lines.push(`MOBILITY: ${mDone} of ${mTotal} finisher items checked this week`);
+  lines.push(`ANKLE ROUTINE: ${mDone} of ${mTotal} items checked this week`);
   lines.push('');
   const ws = weightStats();
   lines.push('BODYWEIGHT (morning weigh-ins)');
